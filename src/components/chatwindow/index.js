@@ -9,8 +9,9 @@ import MoreVertIcon from '@material-ui/icons/MoreVert'
 import EmojiPicker from 'emoji-picker-react'
 import MessageItem from '../MessageItem'
 import './styles.css'
+import Api from '../../api'
 
-export default ({ user }) => {
+export default ({ user, data }) => {
   let recognition = null
   let SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition
@@ -22,37 +23,14 @@ export default ({ user }) => {
   const [emojiopen, setemojiopen] = useState(false)
   const [text, settext] = useState('')
   const [listening, setlistening] = useState(false)
-  const [list, setlist] = useState([
-    { author: 123, body: 'ola mundo' },
-    {
-      author: 124,
-      body:
-        'ola mundo mundo lindo e cruel de quem eu me tenho esforçado a fugir'
-    },
-    { author: 122, body: 'eu te amo' },
-    { author: 123, body: 'ola mundo' },
-    {
-      author: 124,
-      body:
-        'ola mundo mundo lindo e cruel de quem eu me tenho esforçado a fugir'
-    },
-    { author: 122, body: 'eu te amo' },
-    { author: 123, body: 'ola mundo' },
-    {
-      author: 124,
-      body:
-        'ola mundo mundo lindo e cruel de quem eu me tenho esforçado a fugir'
-    },
-    { author: 122, body: 'eu te amo' },
-    { author: 123, body: 'ola mundo' },
-    {
-      author: 124,
-      body:
-        'ola mundo mundo lindo e cruel de quem eu me tenho esforçado a fugir'
-    },
-    { author: 122, body: 'eu te amo' }
-  ])
+  const [list, setlist] = useState([])
+  const [users, setusers] = useState([])
   const body = useRef()
+  useEffect(() => {
+    setlist([])
+    let unsub = Api.onchatcontent(data.chatId, setlist,setusers)
+    return unsub
+  }, [data.chatId])
   useEffect(() => {
     if (body.current.scrollHeight > body.current.offsetHeight) {
       body.current.scrollTop =
@@ -85,17 +63,25 @@ export default ({ user }) => {
       recognition.start()
     }
   }
-  const handleSendClick = () => {}
+  const handleinputkeyup = e => {
+    if (e.keyCode === 13) {
+      handleSendClick()
+    }
+  }
+  const handleSendClick = () => {
+    if (text !== '') {
+      Api.sendmessage(data, user.id, 'text', text,users)
+      settext('')
+      setemojiopen(false)
+    }
+  }
 
   return (
     <div className='chatwindow'>
       <div className='chatwindow--header'>
         <div className='chatwindow--headerinfo'>
-          <img
-            className='chatwindow--avatar'
-            src='https://www.w3schools.com/howto/img_avatar2.png'
-          />
-          <div className='chatwindow--name'>Ruben André</div>
+          <img className='chatwindow--avatar' src={data.image} />
+          <div className='chatwindow--name'>{data.title}</div>
         </div>
         <div className='chatwindow--headerbuttons'>
           <div className='chatwindow--btn'>
@@ -146,6 +132,7 @@ export default ({ user }) => {
             placeholder='Degite uma mensagem'
             value={text}
             onChange={e => settext(e.target.value)}
+            onKeyUp={handleinputkeyup}
           ></input>
         </div>
         <div className='chatwindow--pos'>
